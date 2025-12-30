@@ -1,0 +1,63 @@
+# 作为服务端
+server:
+  # 本地绑定地址
+  bind: 0.0.0.0:17651
+  # tls配置
+  tls:
+    key: |
+        -----BEGIN PRIVATE KEY-----
+        MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg05g+3eBqa1vW8BlM
+        CJj/ioFkTpC0dvn+P+n6iF2VipOhRANCAATkwkJvOm/wFOBcA62nkTq82VQpqOeH
+        NrZ638oqnb6voRODHGAGJC2zJHHdA30qtMoIM+GcwEgCpB40/Gf7o3EV
+        -----END PRIVATE KEY-----
+    cert: |
+        -----BEGIN CERTIFICATE-----
+        MIIBTDCB86ADAgECAgkAiiN0z3svuS4wCgYIKoZIzj0EAwIwITEfMB0GA1UEAwwW
+        cmNnZW4gc2VsZiBzaWduZWQgY2VydDAgFw03NTAxMDEwMDAwMDBaGA80MDk2MDEw
+        MTAwMDAwMFowITEfMB0GA1UEAwwWcmNnZW4gc2VsZiBzaWduZWQgY2VydDBZMBMG
+        ByqGSM49AgEGCCqGSM49AwEHA0IABOTCQm86b/AU4FwDraeROrzZVCmo54c2tnrf
+        yiqdvq+hE4McYAYkLbMkcd0DfSq0yggz4ZzASAKkHjT8Z/ujcRWjEjAQMA4GA1Ud
+        EQQHMAWCA3NucDAKBggqhkjOPQQDAgNIADBFAiEAxvMFTtx+juJw2hCPziySlQ9P
+        LddSVWj3aSCT6G9sJi4CIE5Mrns3h3FouGue3RVZ9x52IodF5uq4RbrvRkjFIbfT
+        -----END CERTIFICATE-----
+
+# 作为客户端
+client:
+  # 本地绑定地址
+  bind: 0.0.0.0:0
+  # 服务端地址
+  server: 127.0.0.1:17651
+  # tls配置
+  tls:
+    cert: |
+        -----BEGIN CERTIFICATE-----
+        MIIBTDCB86ADAgECAgkAiiN0z3svuS4wCgYIKoZIzj0EAwIwITEfMB0GA1UEAwwW
+        cmNnZW4gc2VsZiBzaWduZWQgY2VydDAgFw03NTAxMDEwMDAwMDBaGA80MDk2MDEw
+        MTAwMDAwMFowITEfMB0GA1UEAwwWcmNnZW4gc2VsZiBzaWduZWQgY2VydDBZMBMG
+        ByqGSM49AgEGCCqGSM49AwEHA0IABOTCQm86b/AU4FwDraeROrzZVCmo54c2tnrf
+        yiqdvq+hE4McYAYkLbMkcd0DfSq0yggz4ZzASAKkHjT8Z/ujcRWjEjAQMA4GA1Ud
+        EQQHMAWCA3NucDAKBggqhkjOPQQDAgNIADBFAiEAxvMFTtx+juJw2hCPziySlQ9P
+        LddSVWj3aSCT6G9sJi4CIE5Mrns3h3FouGue3RVZ9x52IodF5uq4RbrvRkjFIbfT
+        -----END CERTIFICATE-----
+
+
+  # 规则
+  rules:
+    # 客户端->服务端 绑定本地地址 访问服务端网络
+    - type: cs/forward
+      value:
+        bind: 0.0.0.0:8080
+        forward: 127.0.0.1:8081
+    # 客户端->服务端 绑定本地socks5地址 访问服务端网络
+    - type: cs/socks5
+      value:
+        bind: 0.0.0.0:2080
+    # 服务端->客户端 绑定服务端地址 反向访问客户端网络
+    - type: sc/forward
+      value:
+        bind: 0.0.0.0:8081
+        forward: 127.0.0.1:8082
+    # 服务端->客户端 绑定服务端socks5地址 反向访问客户端网络
+    - type: sc/socks5 
+      value:
+        bind: 0.0.0.0:2081
