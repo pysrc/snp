@@ -59,10 +59,16 @@ async fn handle_tcp_to_quic(
     let (mut quic_reader, mut quic_writer) = (quic_recv, quic_send);
     
     global_count.fetch_add(1, Ordering::Relaxed);
-    tokio::try_join!(
-        tokio::io::copy(&mut tcp_reader, &mut quic_writer),
-        tokio::io::copy(&mut quic_reader, &mut tcp_writer)
-    )?;
+    // tokio::try_join!(
+    //     tokio::io::copy(&mut tcp_reader, &mut quic_writer),
+    //     tokio::io::copy(&mut quic_reader, &mut tcp_writer)
+    // )?;
+    select! {
+        _ = tokio::io::copy(&mut tcp_reader, &mut quic_writer) => {}
+        _ = tokio::io::copy(&mut quic_reader, &mut tcp_writer) => {}
+    }
+    quic_writer.shutdown().await?;
+    tcp_writer.shutdown().await?;
     global_count.fetch_sub(1, Ordering::Relaxed);
     log::info!("Forward done, current connections: {}", global_count.load(Ordering::Relaxed));
     

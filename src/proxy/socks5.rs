@@ -101,10 +101,14 @@ async fn handle_socks5_connection(
     
     global_count.fetch_add(1, Ordering::Relaxed);
     
-    tokio::try_join!(
-        tokio::io::copy(&mut tcp_reader, &mut quic_writer),
-        tokio::io::copy(&mut quic_reader, &mut tcp_writer)
-    )?;
+    // tokio::try_join!(
+    //     tokio::io::copy(&mut tcp_reader, &mut quic_writer),
+    //     tokio::io::copy(&mut quic_reader, &mut tcp_writer)
+    // )?;
+    select! {
+        _ = tokio::io::copy(&mut tcp_reader, &mut quic_writer) => {}
+        _ = tokio::io::copy(&mut quic_reader, &mut tcp_writer) => {}
+    }
     global_count.fetch_sub(1, Ordering::Relaxed);
     log::info!("Connection closed count: {}", global_count.load(Ordering::Relaxed));
     

@@ -29,19 +29,21 @@ pub async fn handle_forward(send: quinn::SendStream,
     let (mut tcp_reader, mut tcp_writer) = tcp_stream.split();
     let (mut quic_reader, mut quic_writer) = (recv, send);
     
-    let t1 = async {
-        let _ = tokio::io::copy(&mut tcp_reader, &mut quic_writer).await;
-        quic_writer.shutdown().await
-    };
-    let t2 = async {
-        let _ = tokio::io::copy(&mut quic_reader, &mut tcp_writer).await;
-        tcp_writer.shutdown().await
-    };
+    // let t1 = async {
+    //     let _ = tokio::io::copy(&mut tcp_reader, &mut quic_writer).await;
+    //     quic_writer.shutdown().await
+    // };
+    // let t2 = async {
+    //     let _ = tokio::io::copy(&mut quic_reader, &mut tcp_writer).await;
+    //     tcp_writer.shutdown().await
+    // };
     select! {
         _ = token.cancelled() => {}
-        _ = t1 => {}
-        _ = t2 => {}
+        _ = tokio::io::copy(&mut tcp_reader, &mut quic_writer) => {}
+        _ = tokio::io::copy(&mut quic_reader, &mut tcp_writer) => {}
     }
+    quic_writer.shutdown().await?;
+    tcp_writer.shutdown().await?;
     global_count.fetch_sub(1, Ordering::Relaxed);
     log::info!("Forward done, current connections: {}", global_count.load(Ordering::Relaxed));
     Ok(())
