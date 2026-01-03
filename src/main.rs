@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tc = token.clone();
     tokio::spawn(async {
         if let Some(client_config) = config.client {
-            let client = client::SnpClient::new(client_config.bind, client_config.server, client_config.tls.clone(), client_config.rules.clone(), cgc, tc).await.unwrap(); // 需要定义server_addr
+            let client = client::SnpClient::new(client_config.bind, client_config.server, client_config.server_ip_version, client_config.tls.clone(), client_config.rules.clone(), cgc, tc).await.unwrap(); // 需要定义server_addr
             _ = client.run().await;
         }
     });

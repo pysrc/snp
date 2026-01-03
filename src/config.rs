@@ -13,9 +13,15 @@ pub struct ServerConfig {
     pub tls: TlsConfig,
 }
 
+fn default_ipv4() -> String {
+    "ipv4".to_string()
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ClientConfig {
     pub bind: String,
+    #[serde(rename = "server-ip-version", default = "default_ipv4")]
+    pub server_ip_version: String,
     pub server: String,
     pub tls: TlsConfig,
     pub rules: Vec<Rule>,

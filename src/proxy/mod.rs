@@ -1,7 +1,7 @@
 mod forward;
 mod socks5;
 
-use std::{net::ToSocketAddrs, sync::{Arc, atomic::{AtomicUsize, Ordering}}};
+use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
 
 pub use forward::start_forward_client;
 pub use socks5::start_socks5_client;
@@ -21,7 +21,7 @@ pub async fn handle_forward(send: quinn::SendStream,
     recv.read_exact(&mut buf).await?;
     let addr = std::str::from_utf8(&buf)?;
     log::info!("Forward to {}", addr);
-    let to = addr.to_socket_addrs()?.next().unwrap();
+    let to = tokio::net::lookup_host(addr).await?.next().unwrap();
     let mut tcp_stream = TcpStream::connect(to).await?;
 
     global_count.fetch_add(1, Ordering::Relaxed);

@@ -2,13 +2,14 @@
 use quinn::{Endpoint, Connection};
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, select};
 use tokio_util::sync::CancellationToken;
-use std::{net::{SocketAddr, ToSocketAddrs}, str::FromStr, sync::{Arc, atomic::AtomicUsize}};
+use std::{net::SocketAddr, str::FromStr, sync::{Arc, atomic::AtomicUsize}};
 
 use crate::{config::{Rule, TlsConfig}, proxy, tls};
 
 pub struct SnpClient {
     endpoint: Endpoint,
     server_addr: String,
+    server_ip_version: String,
     rules: Vec<Rule>,
     global_count: Arc<AtomicUsize>,
     token: CancellationToken,
@@ -17,6 +18,7 @@ pub struct SnpClient {
 impl SnpClient {
     pub async fn new(bind: String, 
         server_addr: String, 
+        server_ip_version: String,
         tlsconfig: TlsConfig, 
         rules: Vec<Rule>,
         global_count: Arc<AtomicUsize>,
@@ -30,6 +32,7 @@ impl SnpClient {
         Ok(SnpClient {
             endpoint,
             server_addr,
+            server_ip_version,
             rules,
             global_count,
             token,
@@ -37,10 +40,16 @@ impl SnpClient {
     }
 
     pub async fn connect_to_server(&self) -> Result<Connection, Box<dyn std::error::Error>> {
-        let to: SocketAddr = self.server_addr.to_socket_addrs()?.next().unwrap();
-        let connection = self.endpoint.connect(to, "snp")?
-            .await?;
-        Ok(connection)
+        let ids = tokio::net::lookup_host(&self.server_addr).await?;
+        for to in ids {
+            if (self.server_ip_version == "ipv4" && to.is_ipv4()) ||
+                (self.server_ip_version == "ipv6" && to.is_ipv6()) {
+                log::info!("Connect to server {:?}", to);
+                let connection = self.endpoint.connect(to, "snp")?.await?;
+                return Ok(connection);
+            }
+        }
+        Err("Can not connect to server".into())
     }
 
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
