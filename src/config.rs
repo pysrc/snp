@@ -7,10 +7,16 @@ pub struct Config {
     pub client: Option<ClientConfig>,
 }
 
+fn default_transport() -> String {
+    "quic".to_string()
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
     pub bind: String,
     pub tls: TlsConfig,
+    #[serde(default = "default_transport")]
+    pub transport: String,  // "quic" or "tcp"
 }
 
 fn default_ipv4() -> String {
@@ -25,6 +31,8 @@ pub struct ClientConfig {
     pub server: String,
     pub tls: TlsConfig,
     pub rules: Vec<Rule>,
+    #[serde(default = "default_transport")]
+    pub transport: String,  // "quic" or "tcp"
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

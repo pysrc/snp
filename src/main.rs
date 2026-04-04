@@ -4,6 +4,7 @@ mod tls;
 mod server;
 mod client;
 mod proxy;
+mod transport;
 
 use clap::Parser;
 use config::Config;
@@ -41,10 +42,15 @@ async fn gentls() -> std::io::Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Install rustls crypto provider
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls crypto provider");
+
     simple_logger::init_with_level(log::Level::Info)?;
 
     let a = Args::parse();
-    
+
     if a.generate_tls {
         _ = gentls().await?;
         return Ok(());
@@ -52,7 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config_content = fs::read_to_string(a.config.as_str())?;
     let config: Config = serde_yaml::from_str(&config_content)?;
-    
+
     let scfg = config.clone();
 
     // 全局连接统计
@@ -62,18 +68,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sgc = global_count.clone();
     tokio::spawn(async {
         if let Some(server_config) = scfg.server {
-            let tls_config = tls::load_tls_config(&server_config.tls).unwrap();
-            let server = server::SnpServer::new(server_config.bind, tls_config, sgc).await.unwrap();
+            let server = server::SnpServer::new(server_config, sgc).await.unwrap();
             _ = server.run().await;
         }
     });
-    
+
     let token = CancellationToken::new();
     let cgc = global_count.clone();
     let tc = token.clone();
     tokio::spawn(async {
         if let Some(client_config) = config.client {
-            let client = client::SnpClient::new(client_config.bind, client_config.server, client_config.server_ip_version, client_config.tls.clone(), client_config.rules.clone(), cgc, tc).await.unwrap(); // 需要定义server_addr
+            let client = client::SnpClient::new(client_config, cgc, tc).await.unwrap();
             _ = client.run().await;
         }
     });
@@ -81,6 +86,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::signal::ctrl_c().await?;
     token.cancel();
-    
+
     Ok(())
 }

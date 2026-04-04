@@ -2,6 +2,8 @@
 server:
   # 本地绑定地址
   bind: 0.0.0.0:17651
+  # 可选，默认 quic
+  transport: tcp
   # tls配置
   tls:
     key: |
@@ -27,6 +29,8 @@ client:
   bind: 0.0.0.0:0
   # 服务端ip版本 当域名解析多个dns记录时 由此选择ip版本 默认ipv4
   server-ip-version: ipv4
+  # 可选，默认 quic
+  transport: tcp
   # 服务端地址
   server: 127.0.0.1:17651
   # tls配置
