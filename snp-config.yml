@@ -33,6 +33,8 @@ client:
   transport: tcp
   # 服务端地址
   server: 127.0.0.1:17651
+  reconnect-interval: 5    # 断线重连每5秒重试
+  max-reconnect-attempts: 0  # 无限重试
   # tls配置
   tls:
     cert: |

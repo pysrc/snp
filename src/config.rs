@@ -23,6 +23,14 @@ fn default_ipv4() -> String {
     "ipv4".to_string()
 }
 
+fn default_reconnect_interval() -> u64 {
+    5 // 默认5秒
+}
+
+fn default_max_reconnect_attempts() -> u32 {
+    0 // 0表示无限重试
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ClientConfig {
     pub bind: String,
@@ -33,6 +41,10 @@ pub struct ClientConfig {
     pub rules: Vec<Rule>,
     #[serde(default = "default_transport")]
     pub transport: String,  // "quic" or "tcp"
+    #[serde(rename = "reconnect-interval", default = "default_reconnect_interval")]
+    pub reconnect_interval: u64,  // 重连间隔秒数
+    #[serde(rename = "max-reconnect-attempts", default = "default_max_reconnect_attempts")]
+    pub max_reconnect_attempts: u32,  // 最大重连次数，0表示无限
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
